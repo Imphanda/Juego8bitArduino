@@ -1,0 +1,229 @@
+#include "MCUFRIEND_kbv.h"
+MCUFRIEND_kbv tft;
+
+#define LOWFLASH (defined(__AVR_ATmega328P__) && defined(MCUFRIEND_KBV_H_))
+
+#include "bitmap_RGB.h"
+#include <pt.h>
+
+
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define CYAN    0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW  0xFFE0
+#define WHITE   0xFFFF
+#define GREY    0x8410
+#define ORANGE  0xE880
+
+struct pt caminar;
+struct pt caminar2;
+struct pt saltar1;
+struct pt bloque1;
+struct pt bloque2p;
+
+void setup()
+{
+  Serial.begin(9600);
+  uint16_t ID = tft.readID();
+  tft.begin(ID);
+  tft.setRotation(3);
+  static int S1;
+  S1 = 0;
+
+  inicio();
+
+  PT_INIT(&caminar);
+  PT_INIT(&caminar2);
+  PT_INIT(&bloque1);
+  PT_INIT(&bloque2p);
+
+  //    invertmap(betty_1_bmp + 62, 8960);
+  //    while (1);
+}
+
+
+void loop(void)
+{
+  static int x = 320;
+  static int e = 12;
+  static int e2 = 11;
+
+  caminarP1(&caminar, e);
+  caminarP2(&caminar2, e2);
+  bloque(&bloque1);
+  bloque2(&bloque2p);
+
+}
+
+
+void bloque(struct pt *pt) {
+  PT_BEGIN(pt);
+  static int Probs1[10] = {1, 1, 1, 1, 1, 1, 0, 0, 0, 0};
+  static long t = 0;
+  static int x;
+  static int generate;
+  x = 320;
+  do {
+    if (x >= -70 && Probs1[generate] == 1) {
+      tft.fillRect(x, 122, 35, 1, WHITE);
+      tft.fillRect(x, 123, 35, 2, CYAN);
+      x = x - 4;
+    }
+    else if (x >= -70 && Probs1[generate] == 0) {
+      tft.fillRect(x, 122, 45, 4, BLACK);
+      tft.fillRect(x + 45, 122, 35, 1, WHITE);
+      tft.fillRect(x + 45, 123, 35, 2, CYAN);
+      x = x - 4;
+    }
+    else {
+      x = 320;
+      generate = random(0, 11);
+    }
+
+    t = millis();
+    PT_WAIT_WHILE(pt, (millis() - t) < 11);
+  } while (1);
+  PT_END(pt);
+}
+
+void bloque2(struct pt *pt) {
+  PT_BEGIN(pt);
+  static int Probs2[10] = {1, 1, 1, 1, 1, 1, 1, 1, 0, 0};
+  static long t = 0;
+  static int x = 320;
+  static int generate2;
+  do {
+    if (x >= -70 && Probs2[generate2] == 1) {
+      tft.fillRect(x, 200, 35, 1, WHITE);
+      tft.fillRect(x, 201, 35, 2, BLUE);
+      x = x - 4;
+    }
+    else if (x >= -70 && Probs2[generate2] == 0) {
+      tft.fillRect(x, 200, 45, 3, BLACK);
+      tft.fillRect(x + 45, 200, 35, 1, WHITE);
+      tft.fillRect(x + 45, 201, 35, 2, BLUE);
+      x = x - 4;
+    }
+    else {
+      x = 320;
+      generate2 = random(0, 11);
+    }
+    t = millis();
+    PT_WAIT_WHILE(pt, (millis() - t) < 11);
+  } while (1);
+  PT_END(pt);
+}
+
+void caminarP1(struct pt *pt, int e) {
+  PT_BEGIN(pt);
+  static long t = 0;
+  static int boton = 0;
+  static uint8_t j;
+  static uint8_t sube = 1;
+  static int S1 = 0;
+  j = 85;
+  pinMode(e, INPUT);
+  do{
+    boton = digitalRead(e);
+    //Caminar-----------------------------------
+    if (boton == 0 && S1 == 0) {
+      S1 = 0;
+      tft.drawRGBBitmap(150, j, PL1A, 26, 32);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+      tft.drawRGBBitmap(150, j, PL3A, 26, 32);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+      tft.drawRGBBitmap(150, j, PL1A, 26, 32);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+      tft.drawRGBBitmap(150, j, PL3A, 26, 32);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+    }
+    t = millis();
+    PT_WAIT_WHILE(pt, (millis() - t) <=2);
+    //Saltar------------------------------------
+    if (boton == 1 && S1 == 0) {
+      S1 = 1;
+    }
+    t = millis();
+    PT_WAIT_WHILE(pt, (millis() - t) <=2);
+    if (j > 45 && sube == 1 && S1 == 1) {
+      j = j - 5;
+      tft.drawRGBBitmap(150, j, PL4A, 26, 32);
+      tft.fillRect(150, j + 31, 26, 5, BLACK);
+      if (j == 45) {
+        sube = 0;
+      }
+    }
+    t = millis();
+    PT_WAIT_WHILE(pt, (millis() - t) <=2);
+    if (j < 85 && sube == 0 && S1 == 1) {
+      j = j + 5;
+      tft.drawRGBBitmap(150, j, PL4A, 26, 32);
+      tft.fillRect(150, j - 5, 26, 5, BLACK);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) <=2);
+    }
+    else if (j == 85 && sube == 0 && S1 == 1) {
+      sube = 1;
+      S1 = 0;
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) <=2);
+    }
+  }while(1);
+  PT_END(pt);
+}
+
+void caminarP2(struct pt *pt, int e2) {
+  PT_BEGIN(pt);
+  static int boton2 = 0;
+  static uint8_t sube2 = 1;
+  static int S2 = 0;
+  static long t = 0;
+  uint8_t j2;
+  j2 = 165;
+  pinMode(e2, INPUT);
+  while (true) {
+    boton2 = digitalRead(e2);
+    //Caminar-----------------------------------
+    if (boton2 == 0 && S2 == 0) {
+      tft.drawRGBBitmap(150, j2, PL1H, 25, 34);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+      tft.drawRGBBitmap(150, j2, PL3H, 25, 35);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+      tft.drawRGBBitmap(150, j2, PL2H, 25, 35);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+      tft.drawRGBBitmap(150, j2, PL3H, 25, 35);
+      t = millis();
+      PT_WAIT_WHILE(pt, (millis() - t) < 50);
+    }
+  }
+  PT_END(pt);
+}
+
+void inicio() {
+  tft.fillScreen(BLACK);
+  tft.setCursor(1, 1); //setCursor(int16_t x, int16_t y)
+  tft.setTextColor(WHITE);
+  tft.setTextSize(2);
+  tft.println("P-1");
+
+  tft.setCursor(60, 8); //setCursor(int16_t x, int16_t y)
+  tft.setTextColor(WHITE);
+  tft.setTextSize(2);
+  tft.println("Score");
+
+  tft.setCursor(1, 20); //setCursor(int16_t x, int16_t y)
+  tft.setTextColor(WHITE);
+  tft.setTextSize(2);
+  tft.println("P-2");
+
+}
